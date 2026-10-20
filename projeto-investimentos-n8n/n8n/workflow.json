@@ -1,0 +1,159 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "Clientes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b41a298d-9080-4399-8fd7-5d0ff7b2ab6f",
+      "name": "Webhook",
+      "webhookId": "8e828087-322a-48f4-a643-0775b4d8b8b1"
+    },
+    {
+      "parameters": {
+        "url": "https://raw.githubusercontent.com/digitalinnovationone/dio-lab-assistente-investimentos-rpa-n8n/main/docs/data.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        0
+      ],
+      "id": "025bca36-31d8-4a03-9439-552772c9691d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const csvText = $input.item.json.data || $input.item.json.body || Object.values($input.item.json)[0];\nconst lines = csvText.trim().split('\\n');\nconst headers = lines[0].split(',').map(h => h.trim());\n\nconst investments = [];\nfor (let i = 1; i < lines.length; i++) {\n  const currentLine = lines[i].split(',').map(item => item.trim());\n  if (currentLine.length === headers.length) {\n    const obj = {};\n    for (let j = 0; j < headers.length; j++) {\n      obj[headers[j]] = currentLine[j];\n    }\n    investments.push(obj);\n  }\n}\n\nreturn investments.map(inv => ({ json: inv }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "917ef0d4-c625-448e-8e14-6bcfd9aa6b92",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        -144
+      ],
+      "id": "80d4dd75-1815-499c-b079-7293868afce5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json;\n  const nome = data.nome || \"Cliente\";\n  const perfil = data.perfil || \"Conservador\";\n  const saldo = data.saldo || \"R$ 0,00\";\n  const produto = data.Produto || \"Renda Fixa\";\n  const rentabilidade = data.Rentabilidade || \"100% CDI\";\n\n  let mensagem = `Olá ${nome}, seu perfil é ${perfil} e seu saldo atual é ${saldo}. Recomendamos investir em ${produto} com rentabilidade de ${rentabilidade}.`;\n\n  results.push({ json: { nome, perfil, mensagem } });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "7c68bf2f-2e4e-4007-94e1-b4b27fd00838",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        144
+      ],
+      "id": "c39732df-88ac-4e98-8ebb-861006e30ea8",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "38ff7305-8587-4954-aff0-c7d1e36b402d",
+  "meta": {
+    "instanceId": "5e0c8ce3cfbedfcf29cb5cb8e7f8f9aeeeea95c7c3e774ff13c0d4ab1d045135"
+  },
+  "nodeGroups": [],
+  "id": "nMqVh4nuOWcgITJM",
+  "tags": []
+}
